@@ -383,7 +383,7 @@ do_pgfault(struct mm_struct *mm, uint_t error_code, uintptr_t addr) {
             goto failed;
         }
     } else {
-        /*LAB3 EXERCISE 3: YOUR CODE
+        /*LAB3 EXERCISE 3: 2112555
         * 请你根据以下信息提示，补充函数
         * 现在我们认为pte是一个交换条目，那我们应该从磁盘加载数据并放到带有phy addr的页面，
         * 并将phy addr与逻辑addr映射，触发交换管理器记录该页面的访问情况
@@ -406,18 +406,10 @@ do_pgfault(struct mm_struct *mm, uint_t error_code, uintptr_t addr) {
             //map of phy addr <--->
             //logical addr
             //(3) make the page swappable.
-             // 如果开启了swap磁盘虚拟内存交换机制
-            // 将addr线性地址对应的物理页数据从磁盘交换到物理内存中(令Page指针指向交换成功后的物理页)
-            if ((ret = swap_in(mm, addr, &page)) != 0) {
-                // swap_in返回值不为0，表示换入失败
-                cprintf("swap_in in do_pgfault failed\n");
-                goto failed;
-            }    
-            // 将交换进来的page页与mm->padir页表中对应addr的二级页表项建立映射关系(perm标识这个二级页表的各个权限位)
+
+            swap_in(mm,addr,&page);
             page_insert(mm->pgdir, page, addr, perm);
-            // 当前page是为可交换的，将其加入全局虚拟内存交换管理器的管理
             swap_map_swappable(mm, addr, page, 1);
-            page->pra_vaddr = addr;
             page->pra_vaddr = addr;
         } else {
             cprintf("no swap_init_ok but ptep is %x, failed\n", *ptep);
@@ -429,4 +421,3 @@ do_pgfault(struct mm_struct *mm, uint_t error_code, uintptr_t addr) {
 failed:
     return ret;
 }
-
