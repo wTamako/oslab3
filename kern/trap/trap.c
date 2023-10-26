@@ -21,7 +21,7 @@ static void print_ticks() {
     panic("EOT: kernel seems ok.");
 #endif
 }
-
+int print_ticks_count =0;
 /* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S
  */
 void idt_init(void) {
@@ -150,6 +150,11 @@ void interrupt_handler(struct trapframe *tf) {
             clock_set_next_event();
             if (++ticks % TICK_NUM == 0) {
                 print_ticks();
+                print_ticks_count++;
+                if(print_ticks_count==10)
+                {
+                    sbi_shutdown();
+                }
             }
             break;
         case IRQ_H_TIMER:
@@ -186,11 +191,29 @@ void exception_handler(struct trapframe *tf) {
         case CAUSE_FETCH_ACCESS:
             cprintf("Instruction access fault\n");
             break;
+        
         case CAUSE_ILLEGAL_INSTRUCTION:
-            cprintf("Illegal instruction\n");
+            // 处理非法指令异常
+            /* LAB1 CHALLENGE3   2112555 :  */
+            /* (1) 输出指令异常类型（Illegal instruction）
+             * (2) 输出异常指令地址
+             * (3) 更新 tf->epc 寄存器
+             */
+            cprintf("Illegal instruction exception\n");
+            cprintf("Instruction address: 0x%x\n", tf->epc);
+            tf->epc += 4; 
             break;
+
         case CAUSE_BREAKPOINT:
-            cprintf("Breakpoint\n");
+            // 处理断点异常
+            /* LAB1 CHALLLENGE3   2112555:  */
+            /* (1) 输出指令异常类型（Breakpoint）
+             * (2) 输出异常指令地址
+             * (3) 更新 tf->epc 寄存器
+             */
+            cprintf("Breakpoint exception\n");
+            cprintf("Breakpoint address: 0x%x\n", tf->epc);
+            tf->epc += 4;
             break;
         case CAUSE_MISALIGNED_LOAD:
             cprintf("Load address misaligned\n");
